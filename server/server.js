@@ -5,21 +5,18 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 
-// Middleware
+
 app.use(express.json());
 
-// Simple logger (optional)
 app.use((req, res, next) => {
   console.log(`[${req.method}] ${req.url}`);
   next();
 });
 
-// Default route
 app.get('/', (req, res) => {
   res.send('API is up and running');
 });
 
-// Routes
 const userRoutes = require('./routes/userRoutes');
 const influencerRoutes = require('./routes/influencerRoutes');
 const brandRoutes = require('./routes/brandRoutes');
