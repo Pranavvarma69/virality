@@ -1,51 +1,85 @@
-import pandas as pd
 import random
+import numpy as np
+from faker import Faker
 from pymongo import MongoClient
+from datetime import datetime
 
-# Load dataset
+# Initialize Faker
+fake = Faker()
+Faker.seed(42)
 
-df = pd.read_csv("/Users/rudrarajupranav/Downloads/tweets-engagement-metrics 2.csv")
-df = df.drop_duplicates(subset='TweetID')
-
-# Assign random influencer names
-num_influencers = 1000
-influencer_names = [f"influencer_{i+1}" for i in range(num_influencers)]
-df['influencer_name'] = [random.choice(influencer_names) for _ in range(len(df))]
-
-# Calculate engagement (likes + retweets)
-df['engagement'] = df['Likes'] + df['RetweetCount']
-
-# Calculate engagement_rate as target variable
-df['engagement_rate'] = df['engagement'] / df['Reach']
-
-# Sort by engagement descending and take top 1000
-df_top = df.sort_values(by='engagement', ascending=False).head(1000)
-
-# Prepare data for MongoDB
-social_posts = []
-for _, row in df_top.iterrows():
-    social_posts.append({
-        "influencer_name": row['influencer_name'],
-        "platform": "twitter",
-        "postId": row['TweetID'],
-        "text": row['text'],
-        "metrics": {
-            "likes": row['Likes'],
-            "retweets": row['RetweetCount'],
-            "reach": row['Reach'],
-        },
-        "target": {
-            "engagement_rate": row['engagement_rate']  # target variable for ML
-        }
-    })
-
-# Connect to MongoDB Atlas
+# Connect to MongoDB
 client = MongoClient("mongodb+srv://pranavrudraraju6_db_user:X7m0Bb9pIPFwU7Oq@cluster0.dm7hktz.mongodb.net/mydatabase?retryWrites=true&w=majority")
-db = client['mydatabase']
-collection = db['socialposts']
-collection.delete_many({})
-print("Deleted all existing records")
+db = client["mydatabase"]
+influencers_col = db["influencers"]
+socialposts_col = db["socialposts"]
 
-# Insert into MongoDB
-result = collection.insert_many(social_posts)
-print(f"Inserted {len(result.inserted_ids)} top records into MongoDB with engagement_rate")
+# Clear old synthetic data (optional)
+influencers_col.delete_many({})
+socialposts_col.delete_many({})
+
+# Define platform engagement behavior
+platforms = {
+    "instagram": {"followers_range": (5_000, 500_000), "engagement_range": (1.5, 5.0)},
+    "youtube": {"followers_range": (10_000, 2_000_000), "engagement_range": (0.5, 2.0)},
+    "tiktok": {"followers_range": (1_000, 1_000_000), "engagement_range": (4.0, 12.0)},
+}
+
+# Number of influencers to generate
+NUM_INFLUENCERS = 100
+print(f"🧩 Generating {NUM_INFLUENCERS} influencers with realistic names...")
+
+for i in range(NUM_INFLUENCERS):
+    # Randomly assign a platform
+    platform = random.choice(list(platforms.keys()))
+    follower_count = random.randint(*platforms[platform]["followers_range"])
+    base_engagement_rate = random.uniform(*platforms[platform]["engagement_range"])
+
+    # Generate realistic influencer info
+    full_name = fake.name()
+    username = full_name.lower().replace(" ", "_").replace(".", "")
+    handle = f"@{username}"
+
+    # Create influencer document
+    influencer_doc = {
+        "name": full_name,
+        "userId": None,
+        "socialHandles": {platform: handle},
+        "username": username,
+        "followerCount": follower_count,
+        "status": random.choice(["active", "prospect", "inactive"]),
+        "createdAt": datetime.now(),
+        "updatedAt": datetime.now()
+    }
+
+    influencer_result = influencers_col.insert_one(influencer_doc)
+    influencer_id = influencer_result.inserted_id
+
+    # Generate 5–15 synthetic posts per influencer
+    num_posts = random.randint(5, 15)
+    for _ in range(num_posts):
+        # Engagement simulation
+        reach = int(follower_count * np.random.uniform(0.1, 0.6))
+        likes = int(reach * (base_engagement_rate / 100) * np.random.uniform(0.5, 1.2))
+        shares = int(likes * np.random.uniform(0.05, 0.3))
+
+        post_doc = {
+            "influencerId": influencer_id,
+            "platform": platform,
+            "postId": fake.uuid4(),
+            "text": fake.sentence(nb_words=12),
+            "createdAt": fake.date_time_this_year(),
+            "metrics": {
+                "likes": likes,
+                "shares": shares,
+                "reach": reach
+            },
+            "predictedVirality": round(np.random.uniform(0, 1), 3),
+            "updatedAt": datetime.now()
+        }
+
+        socialposts_col.insert_one(post_doc)
+
+    print(f"✅ Added {num_posts} posts for {platform} influencer {full_name} ({follower_count} followers)")
+
+print(f"🎉 Finished generating {NUM_INFLUENCERS} influencers with realistic names and posts!")
