@@ -37,7 +37,7 @@ df = df_posts.merge(df_influencers, left_on="influencerId", right_on="_id", how=
 
 # Ensure followerCount exists
 if "followerCount" not in df.columns:
-    print("⚠️ followerCount missing after merge — filling with 0.")
+    print("followerCount missing")
     df["followerCount"] = 0.0
 else:
     missing = df["followerCount"].isna().sum()
