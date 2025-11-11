@@ -64,6 +64,10 @@ const AppNavbar = () => {
             <LinkContainer to="/influencers">
               <Nav.Link>👤 Influencers</Nav.Link>
             </LinkContainer>
+            <LinkContainer to="/predict">
+              <Nav.Link>🤖 Predict</Nav.Link>
+            </LinkContainer>
+            
           </Nav>
 
           <Nav className="ms-auto">

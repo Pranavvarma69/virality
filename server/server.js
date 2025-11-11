@@ -28,6 +28,8 @@ const campaignRoutes = require('./routes/campaignRoutes');
 const influencerCampaignRoutes = require('./routes/influencerCampaignRoutes');
 const socialAccountRoutes = require('./routes/socialRoutes'); 
 const socialPostRoutes = require('./routes/socialpostRoutes');
+const analyticsRoutes = require("./routes/analyticsRoutes");
+const predictRoutes = require("./routes/predictedRoutes");
 
 app.use('/api/posts', socialPostRoutes);
 
@@ -36,7 +38,9 @@ app.use('/api/influencers', influencerRoutes);
 app.use('/api/brands', brandRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api', influencerCampaignRoutes);
-app.use('/api/influencers', socialAccountRoutes); // Mount social accounts routes
+app.use('/api/influencers', socialAccountRoutes); 
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/predict", predictRoutes);
 
 // MongoDB Connection
 mongoose 

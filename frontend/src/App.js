@@ -5,6 +5,8 @@ import Dashboard from "./pages/Dashboard";  // ✅ Your dashboard page
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import InfluencerPage from "./pages/influencerspage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import PredictPage from "./pages/PredictPage";
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
           <Route path="/influencers" element={<InfluencerPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/predict" element={<PredictPage />} />
         </Routes>
       </div>
     </Router>
